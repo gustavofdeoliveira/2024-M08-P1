@@ -102,4 +102,10 @@ Onde no código, é feito a leitura do json, verificação dos dados e transform
 ```
 ### Demonstração
 
+#### Simulador
+
 ![alt text](<img/Captura de tela de 2024-03-08 10-30-04.png>)
+
+#### Testes
+
+![alt text](<img/Captura de tela de 2024-03-08 10-52-17.png>)
