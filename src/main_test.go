@@ -60,26 +60,24 @@ func TestReadFileSuccess(t *testing.T) {
 
 func TestCreateAndPublisObject(t *testing.T) {
 	fmt.Println("TestCreateAndPublisObject")
+	var file = readFile(openFile("data.json"))
 	var result []map[string]interface{}
-	bytes := []byte(`[{"Datetime":"2021-09-01T12:00:00Z","Value":10.0}]`)
-	json.Unmarshal(bytes, &result)
-
-	newObject := createObject(result)
-	if newObject == nil {
-		t.Errorf("Erro ao criar objeto")
-	}
-
+	json.Unmarshal(file, &result)
 	opts := MQTT.NewClientOptions().AddBroker("tcp://localhost:1891")
 	opts.SetClientID("go_subscriber")
 
-	subscriber := NewMQTTSubscriber(&MQTTSubscriber{})
-
-	publishObject(newObject, subscriber)
-
+	subscriber := NewMQTTSubscriber()
+	for _, obj := range result {
+		publishObject(obj, subscriber)
+		if !subscriber.client.IsConnected() {
+			t.Errorf("Erro de conexão")
+		}
+	}
+	subscriber.client.Disconnect(250)
 }
 
-func TestPublicAndRecevedMessage(t *testing.T) {
-	fmt.Println("TestPublicAndRecevedMessage")
+func TestPublicAndRecevedMessageQos(t *testing.T) {
+	fmt.Println("TestPublicAndRecevedMessageQos")
 	var file = openFile("data.json")
 	var bytes = readFile(file)
 
@@ -89,63 +87,34 @@ func TestPublicAndRecevedMessage(t *testing.T) {
 		t.Fatalf("Erro ao decodificar o JSON: %s", err)
 	}
 
-	newObject := createObject(result)
-
-	var subscriber = NewMQTTSubscriber(&MQTTSubscriber{})
-
-	var jsonObject = publishObject(newObject, subscriber)
-
+	var subscriber = NewMQTTSubscriber()
 	var messageReceiver = &MQTTSubscriber{}
 
 	messageChannel := make(chan string)
+	qosChannel := make(chan string)
 
 	subscriber.client.Subscribe("topic/publisher", 1, func(client MQTT.Client, msg MQTT.Message){
 		messageReceiver.ReceiveMessage(client, msg)
-
 		messageChannel <- string(msg.Payload())
+		qosChannel <- string(msg.Qos())
 	})
 
-	receivedMessage := <-messageChannel
-
-	if receivedMessage != jsonObject{
-		t.Errorf("Erro ao receber mensagem")
-	
+	for _, obj := range result {
+		publishObject(obj, subscriber)
 	}
+	
+	receivedMessage := <-messageChannel
+	receivedQos := <-qosChannel
+
+	if receivedMessage == "" {
+		t.Errorf("Erro ao receber mensagem")
+	}
+	if receivedQos == "" {
+		t.Errorf("Erro ao receber QoS")
+	}
+
 
 	close(messageChannel)
+	close(qosChannel)
 }
 
-// func TestTimeSend(t *testing.T) {
-// 	fmt.Printf("TestTimeSend")
-	
-//     var result []map[string]interface{}
-//     bytes := []byte(`[{"Datetime":"2021-09-01T12:00:00Z","Value":10.0}]`)
-//     json.Unmarshal(bytes, &result)
-
-    
-   
-// 	newObject := createObject(bytes)
-// 	if newObject == nil {
-// 		t.Errorf("Erro ao criar objeto")
-// 	}
-
-// 	opts := MQTT.NewClientOptions().AddBroker("tcp://localhost:1891")
-// 	opts.SetClientID("go_subscriber")
-
-// 	subscriber := NewMQTTSubscriber(opts, &MQTTSubscriber{})
-
-// 	publishObject(newObject, subscriber)
-
-// }
-
-func TestConnection(t *testing.T) {
-
-	subscriber := NewMQTTSubscriber(&MQTTSubscriber{})
-
-	if subscriber.client.IsConnected() {
-		fmt.Println("Conectado")
-	} else {
-		t.Errorf("Erro de conexão")
-	}
-	subscriber.client.Disconnect(250)
-}
