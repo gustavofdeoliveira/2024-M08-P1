@@ -1,0 +1,25 @@
+[{
+    "id": "lj01f01",
+    "tipo": "freezer",
+    "temperatura": -18,
+    "timestamp": "01/03/2024 14:30:21"
+  },
+  {
+    "id": "lj02g03",
+    "tipo": "geladeira",
+    "temperatura": 5,
+    "timestamp": "01/03/2024 14:30:40"
+  },
+  {
+    "id": "lj01f02",
+    "tipo": "freezer",
+    "temperatura": -26,
+    "timestamp": "01/03/2024 14:31:01"
+  },
+  {
+    "id": "lj03g01",
+    "tipo": "geladeira",
+    "temperatura": 12,
+    "timestamp": "01/03/2024 14:30"
+  }
+]
